@@ -106,4 +106,59 @@ class AsistenciaAdministrativoController extends Controller
         }
         throw new \yii\web\NotFoundHttpException('Tipo de exportación no soportado.');
     }
+
+    public function actionAdmAtrasos()
+    {
+        $model = new \backend\models\AdmAtrasosForm();
+        $data = [];
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            $mes = $model->mes;
+            list($anio, $mesNum) = explode('-', $mes);
+            $query = AsistenciaAdministrativo::find()->joinWith('persona')
+                ->where(["=", "DATEPART(year, HoraEntrada)", $anio])
+                ->andWhere(["=", "DATEPART(month, HoraEntrada)", ltrim($mesNum, '0')]);
+            $asistencias = $query->all();
+            $acumulados = [];
+            foreach ($asistencias as $asistencia) {
+                $personaId = $asistencia->IdPersona;
+                $clave = $personaId . '-' . $mes;
+                if (!isset($acumulados[$clave])) {
+                    $acumulados[$clave] = [
+                        'persona' => $asistencia->persona,
+                        'minutos' => 0,
+                        'atrasos' => 0,
+                        'IdPersona' => $personaId,
+                    ];
+                }
+                if ($asistencia->HoraEntrada && $asistencia->HoraRegistroEntrada) {
+                    $entrada  = strtotime($asistencia->HoraEntrada);
+                    $registro = strtotime($asistencia->HoraRegistroEntrada);
+                    if ($registro > $entrada) {
+                        $segundosRetraso = $registro - $entrada;
+                        $minutosRetraso = round($segundosRetraso / 60, 2);
+                        $acumulados[$clave]['minutos'] += $minutosRetraso;
+                        if ($segundosRetraso > 300) {
+                            $acumulados[$clave]['atrasos']++;
+                        }
+                    }
+                }
+            }
+            // Filtrar solo administrativos con 5 o más atrasos
+            $acumulados = array_filter($acumulados, function($item) {
+                return $item['atrasos'] >= 5;
+            });
+            // Ordenar por atrasos y minutos descendente
+            usort($acumulados, function($a, $b) {
+                if ($a['atrasos'] == $b['atrasos']) {
+                    return $b['minutos'] <=> $a['minutos'];
+                }
+                return $b['atrasos'] <=> $a['atrasos'];
+            });
+            $data = $acumulados;
+        }
+        return $this->render('adm_atrasos', [
+            'model' => $model,
+            'data' => $data,
+        ]);
+    }
 }
