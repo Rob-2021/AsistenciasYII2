@@ -9,9 +9,33 @@ class ReporteExcel
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
+        // Traducción de días a español
+        $diasEspanol = [
+            'Mon' => 'Lunes',
+            'Tue' => 'Martes',
+            'Wed' => 'Miércoles',
+            'Thu' => 'Jueves',
+            'Fri' => 'Viernes',
+            'Sat' => 'Sábado',
+            'Sun' => 'Domingo',
+        ];
         $sheet->fromArray([
-            ['Nombre', 'CodigoTipoHorario', 'CodigoTurno', 'HoraEntrada', 'HoraRegistroEntrada', 'Retraso', 'HoraSalida', 'HoraRegistroSalida', 'EstadoEntrada', 'EstadoSalida', 'Sanciones', 'EstadoAsistencia', 'Observaciones']
+            ['Nombre', 'Fecha', 'Día', 'CodigoTipoHorario', 'CodigoTurno', 'HoraEntrada', 'HoraRegistroEntrada', 'Retraso', 'HoraSalida', 'HoraRegistroSalida', 'EstadoEntrada', 'EstadoSalida', 'Sanciones', 'EstadoAsistencia', 'Observaciones']
         ], null, 'A1');
+
+        // Ordenar asistencias por fecha y luego por turno (M antes que T)
+        if (!empty($asistencias)) {
+            usort($asistencias, function($a, $b) {
+                $fechaA = $a->HoraEntrada ? strtotime($a->HoraEntrada) : 0;
+                $fechaB = $b->HoraEntrada ? strtotime($b->HoraEntrada) : 0;
+                if ($fechaA === $fechaB) {
+                    $turnoA = $a->CodigoTurno ?? '';
+                    $turnoB = $b->CodigoTurno ?? '';
+                    return strcmp($turnoA, $turnoB);
+                }
+                return $fechaA <=> $fechaB;
+            });
+        }
 
         $atrasosPorPersonaMes = [];
         $minutosPorPersonaMes = [];
@@ -19,6 +43,9 @@ class ReporteExcel
         $row = 2;
         foreach ($asistencias as $asistencia) {
             $nombreCompleto = ($asistencia->persona->Nombres ?? '') . ' ' . ($asistencia->persona->Paterno ?? '') . ' ' . ($asistencia->persona->Materno ?? '');
+            $fecha = $asistencia->HoraEntrada ? date('d/m/Y', strtotime($asistencia->HoraEntrada)) : '';
+            $diaEn = $asistencia->HoraEntrada ? date('D', strtotime($asistencia->HoraEntrada)) : '';
+            $dia = isset($diasEspanol[$diaEn]) ? $diasEspanol[$diaEn] : $diaEn;
             $retrasoTexto = '';
             $mes = $asistencia->HoraEntrada ? date('Y-m', strtotime($asistencia->HoraEntrada)) : '';
             $personaId = $asistencia->IdPersona;
@@ -67,17 +94,20 @@ class ReporteExcel
             $descuentoMes = '';
             $acumuladoMes = $minutosPorPersonaMes[$clave];
             if ($acumuladoMes >= 100 && $acumuladoMes <= 120) {
-                $descuentoMes = " - 6 días descuento (acumulado mes)";
+                $descuentoMes = "\n- 6 días descuento (acumulado mes)";
             } elseif ($acumuladoMes > 120) {
-                $descuentoMes = " - 8 días descuento (acumulado mes)";
+                $descuentoMes = "\n- 8 días descuento (acumulado mes)";
             }
+            $acumuladoTexto = "\nAcumulado mes: ".number_format($acumuladoMes, 2)." min";
             $sheet->fromArray([
                 $nombreCompleto,
+                $fecha,
+                $dia,
                 $asistencia->CodigoTipoHorario,
                 $asistencia->CodigoTurno,
                 $asistencia->HoraEntrada,
                 $asistencia->HoraRegistroEntrada,
-                $retrasoTexto . $descuentoMes . "\nAcumulado mes: {$acumuladoMes} min",
+                $retrasoTexto . $descuentoMes . $acumuladoTexto,
                 $asistencia->HoraSalida,
                 $asistencia->HoraRegistroSalida,
                 $asistencia->EstadoEntrada,
