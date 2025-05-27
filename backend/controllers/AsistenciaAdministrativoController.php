@@ -16,15 +16,7 @@ class AsistenciaAdministrativoController extends Controller
 
         $busqueda = $request->get('busqueda');
         if ($busqueda) {
-            $palabras = preg_split('/\s+/', trim($busqueda));
-            foreach ($palabras as $palabra) {
-                $query->andWhere([
-                    'or',
-                    ['like', 'Nombres', $palabra],
-                    ['like', 'Paterno', $palabra],
-                    ['like', 'Materno', $palabra],
-                ]);
-            }
+            $query->andWhere(['AsistenciaAdministrativos.IdPersona' => $busqueda]);
         }
         if ($dia = $request->get('dia')) {
             $query->andWhere(["=", "CONVERT(date, HoraEntrada)", $dia]);
@@ -60,15 +52,8 @@ class AsistenciaAdministrativoController extends Controller
         $query = AsistenciaAdministrativo::find()->joinWith('persona')->orderBy(['IdPersona' => SORT_DESC]);
         $busqueda = $request->get('busqueda');
         if ($busqueda) {
-            $palabras = preg_split('/\s+/', trim($busqueda));
-            foreach ($palabras as $palabra) {
-                $query->andWhere([
-                    'or',
-                    ['like', 'Nombres', $palabra],
-                    ['like', 'Paterno', $palabra],
-                    ['like', 'Materno', $palabra],
-                ]);
-            }
+            // Buscar por IdPersona exacto, especificando la tabla para evitar ambigüedad
+            $query->andWhere(['AsistenciaAdministrativos.IdPersona' => $busqueda]);
         }
         if ($dia = $request->get('dia')) {
             $query->andWhere(["=", "CONVERT(date, HoraEntrada)", $dia]);

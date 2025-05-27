@@ -7,7 +7,7 @@ $this->title = 'Asistencias de Administrativos';
 <h1><?= Html::encode($this->title) ?></h1>
 
 <form method="get" action="<?= \yii\helpers\Url::to(['asistencia-administrativo/index']) ?>">
-    <input type="text" name="busqueda" placeholder="Buscar por nombre..." value="<?= Html::encode(Yii::$app->request->get('busqueda', '')) ?>">
+    <input type="text" name="busqueda" placeholder="Buscar por IdPersona..." value="<?= Html::encode(Yii::$app->request->get('busqueda', '')) ?>">
     <input type="month" name="mes" value="<?= Html::encode(Yii::$app->request->get('mes', '')) ?>">
     <input type="date" name="dia" value="<?= Html::encode(Yii::$app->request->get('dia', '')) ?>">
     <button type="submit">Buscar</button>
