@@ -51,8 +51,11 @@ class AsistenciaAdministrativoController extends Controller
         $request = Yii::$app->request;
         $query = AsistenciaAdministrativo::find()->joinWith('persona')->orderBy(['IdPersona' => SORT_DESC]);
         $busqueda = $request->get('busqueda');
+
+        if (!$busqueda && $request->get('id')) {
+            $busqueda = $request->get('id');
+        }
         if ($busqueda) {
-            // Buscar por IdPersona exacto, especificando la tabla para evitar ambigüedad
             $query->andWhere(['AsistenciaAdministrativos.IdPersona' => $busqueda]);
         }
         if ($dia = $request->get('dia')) {
@@ -144,6 +147,30 @@ class AsistenciaAdministrativoController extends Controller
         return $this->render('adm_atrasos', [
             'model' => $model,
             'data' => $data,
+        ]);
+    }
+
+    public function actionAsistenciaAdmcomun()
+    {
+        $request = Yii::$app->request;
+        $id = $request->get('id');
+        $mes = $request->get('mes');
+        $dia = $request->get('dia');
+        $asistencias = [];
+        if ($id && ($mes || $dia)) {
+            $query = AsistenciaAdministrativo::find()->joinWith('persona')->where(['AsistenciaAdministrativos.IdPersona' => $id]);
+            if ($dia) {
+                $query->andWhere(["=", "CONVERT(date, HoraEntrada)", $dia]);
+            }
+            if ($mes) {
+                list($anio, $mesNum) = explode('-', $mes);
+                $query->andWhere(["=", "DATEPART(year, HoraEntrada)", $anio]);
+                $query->andWhere(["=", "DATEPART(month, HoraEntrada)", ltrim($mesNum, '0')]);
+            }
+            $asistencias = $query->all();
+        }
+        return $this->render('asistenciaADMcomun', [
+            'asistencias' => $asistencias,
         ]);
     }
 }
