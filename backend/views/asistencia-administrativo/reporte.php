@@ -38,14 +38,26 @@ $diasEspanol = [
 
 // Mostrar el nombre del administrativo si solo hay uno en el reporte
 $nombreAdministrativo = '';
+$mesReporte = '';
 if (count($asistencias) > 0) {
     $admin = $asistencias[0]->persona;
     if ($admin) {
         $nombreAdministrativo = trim(($admin->Nombres ?? '') . ' ' . ($admin->Paterno ?? '') . ' ' . ($admin->Materno ?? ''));
     }
+    // Obtener mes del primer registro
+    $mesNum = $asistencias[0]->HoraEntrada ? date('m', strtotime($asistencias[0]->HoraEntrada)) : '';
+    $anio = $asistencias[0]->HoraEntrada ? date('Y', strtotime($asistencias[0]->HoraEntrada)) : '';
+    $mesesEspanol = [
+        '01' => 'Enero', '02' => 'Febrero', '03' => 'Marzo', '04' => 'Abril',
+        '05' => 'Mayo', '06' => 'Junio', '07' => 'Julio', '08' => 'Agosto',
+        '09' => 'Septiembre', '10' => 'Octubre', '11' => 'Noviembre', '12' => 'Diciembre'
+    ];
+    if ($mesNum && $anio) {
+        $mesReporte = $mesesEspanol[$mesNum] . ' ' . $anio;
+    }
 }
 ?>
-<h1><?= Html::encode($this->title) ?></h1>
+<h1><?= Html::encode($this->title) ?><?= $mesReporte ? ' - ' . Html::encode($mesReporte) : '' ?></h1>
 <?php if ($nombreAdministrativo): ?>
     <h3><?= Html::encode($nombreAdministrativo) ?></h3>
 <?php endif; ?>

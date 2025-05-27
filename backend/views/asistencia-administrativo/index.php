@@ -1,6 +1,7 @@
 <?php
 use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\bootstrap5\LinkPager;
 
 $this->title = 'Asistencias de Administrativos';
 ?>
@@ -40,5 +41,8 @@ $this->title = 'Asistencias de Administrativos';
         'Sanciones',
         'EstadoAsistencia',
         'Observaciones',
+    ],
+    'pager' => [
+        'class' => 'yii\\bootstrap5\\LinkPager',
     ],
 ]); ?>

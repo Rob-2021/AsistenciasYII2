@@ -32,8 +32,8 @@ $this->title = 'Administrativos con más atrasos y minutos acumulados';
                 <td><?= Html::encode($item['atrasos']) ?></td>
                 <td>
                     <?php $mes = $model->mes; ?>
-                    <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/exportar', 'tipo' => 'pdf', 'mes' => $mes, 'busqueda' => $item['persona']->Nombres]) ?>" class="btn btn-danger btn-sm" target="_blank">PDF</a>
-                    <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/exportar', 'tipo' => 'excel', 'mes' => $mes, 'busqueda' => $item['persona']->Nombres]) ?>" class="btn btn-success btn-sm" target="_blank">Excel</a>
+                    <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/exportar', 'tipo' => 'pdf', 'mes' => $mes, 'id' => $item['IdPersona']]) ?>" class="btn btn-danger btn-sm" target="_blank">PDF</a>
+                    <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/exportar', 'tipo' => 'excel', 'mes' => $mes, 'id' => $item['IdPersona']]) ?>" class="btn btn-success btn-sm" target="_blank">Excel</a>
                 </td>
             </tr>
         <?php endforeach; ?>
