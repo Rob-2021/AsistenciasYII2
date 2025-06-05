@@ -178,4 +178,53 @@ class AsistenciaAdministrativoController extends Controller
             'asistencias' => $asistencias,
         ]);
     }
+
+    public function actionPlanillas()
+    {
+        $model = new \backend\models\AdmAtrasosForm();
+        $data = [];
+        $mes = null;
+        $page = Yii::$app->request->get('page', 1);
+        $pageSize = 20;
+        $total = 0;
+        if ($model->load(Yii::$app->request->get()) && $model->validate() && $model->mes) {
+            $mes = $model->mes;
+            list($anio, $mesNum) = explode('-', $mes);
+            $query = \common\models\AsistenciaAdministrativo::find()
+                ->select(['IdPersona'])
+                ->where(["=", "DATEPART(year, HoraEntrada)", $anio])
+                ->andWhere(["=", "DATEPART(month, HoraEntrada)", ltrim($mesNum, '0')])
+                ->groupBy('IdPersona');
+            $total = $query->count();
+            $pagination = new \yii\data\Pagination([
+                'totalCount' => $total,
+                'pageSize' => $pageSize,
+                'page' => $page - 1,
+            ]);
+            $ids = $query
+                ->offset($pagination->offset)
+                ->limit($pagination->limit)
+                ->column();
+            $data = [];
+            foreach ($ids as $id) {
+                $persona = \common\models\Persona::findOne($id);
+                $data[] = [
+                    'IdPersona' => $id,
+                    'persona' => $persona,
+                ];
+            }
+        } else {
+            $pagination = new \yii\data\Pagination([
+                'totalCount' => 0,
+                'pageSize' => $pageSize,
+                'page' => $page - 1,
+            ]);
+        }
+        return $this->render('planillas', [
+            'model' => $model,
+            'data' => $data,
+            'pagination' => $pagination,
+            'mes' => $mes,
+        ]);
+    }
 }
