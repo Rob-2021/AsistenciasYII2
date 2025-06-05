@@ -76,7 +76,8 @@ if (count($asistencias) > 0) {
             <th>Estado Entrada</th>
             <th>Estado Salida</th>
             <th>Asistencia</th>
-            <th>Retraso</th>
+            <th>Minutos Retraso</th>
+            <th>Atrasos</th>
             <th>Observaciones</th>
         </tr>
     </thead>
@@ -95,14 +96,12 @@ if (count($asistencias) > 0) {
         $estadoSalida = $asistencia->EstadoSalida ?? '';
         $asistenciaEstado = $asistencia->EstadoAsistencia ?? '';
         $observaciones = $asistencia->Observaciones ?? '';
-        // Calcular retraso como antes
-        $retrasoTexto = '';
+
         $mes = $asistencia->HoraEntrada ? date('Y-m', strtotime($asistencia->HoraEntrada)) : '';
         $personaId = $asistencia->IdPersona;
         $clave = $personaId . '-' . $mes;
         if (!isset($minutosPorPersonaMes[$clave])) $minutosPorPersonaMes[$clave] = 0;
-        if (!isset($reincidenciasPorPersonaMes[$clave])) $reincidenciasPorPersonaMes[$clave] = 0;
-        if (!isset($atrasosPorPersonaMes[$clave])) $atrasosPorPersonaMes[$clave] = 0;
+
         if ($asistencia->HoraEntrada && $asistencia->HoraRegistroEntrada) {
             $entradaTime  = strtotime($asistencia->HoraEntrada);
             $registroTime = strtotime($asistencia->HoraRegistroEntrada);
@@ -110,47 +109,11 @@ if (count($asistencias) > 0) {
                 $segundosRetraso = $registroTime - $entradaTime;
                 $minutosRetraso = round($segundosRetraso / 60, 2);
                 $minutosPorPersonaMes[$clave] += $minutosRetraso;
-                if ($segundosRetraso > 300 && $minutosRetraso < 10) {
-                    $atrasosPorPersonaMes[$clave]++;
-                    $numAtrasos = $atrasosPorPersonaMes[$clave];
-                    // if ($numAtrasos === 4) {
-                    //     $retrasoTexto = "<span style='color:red;font-weight:bold'>{$numAtrasos} atrasos ({$minutosRetraso} min) - 0.5 día descuento</span>";
-                    // } elseif ($numAtrasos === 8) {
-                    //     $retrasoTexto = "<span style='color:red;font-weight:bold'>{$numAtrasos} atrasos ({$minutosRetraso} min) - 1 día descuento</span>";
-                    // } elseif ($numAtrasos === 12) {
-                    //     $retrasoTexto = "<span style='color:red;font-weight:bold'>{$numAtrasos} atrasos ({$minutosRetraso} min) - 2 días descuento</span>";
-                    // } else {
-                    //     $retrasoTexto = "{$numAtrasos} atraso(s) ({$minutosRetraso} min)";
-                    // }
-                } 
-                // elseif ($minutosRetraso >= 10 && $minutosRetraso <= 30) {
-                //     $reincidenciasPorPersonaMes[$clave]++;
-                //     if ($reincidenciasPorPersonaMes[$clave] > 1) {
-                //         $retrasoTexto = "<span style='color:red;font-weight:bold'>Atraso de {$minutosRetraso} min - 2 días descuento (reincidencia)</span>";
-                //     } else {
-                //         $retrasoTexto = "<span style='color:red;font-weight:bold'>Atraso de {$minutosRetraso} min - 0.5 día descuento</span>";
-                //     }
-                // } elseif ($minutosRetraso > 30) {
-                //     $reincidenciasPorPersonaMes[$clave]++;
-                //     if ($reincidenciasPorPersonaMes[$clave] > 1) {
-                //         $retrasoTexto = "<span style='color:red;font-weight:bold'>Atraso de {$minutosRetraso} min - 2 días descuento (reincidencia)</span>";
-                //     } else {
-                //         $retrasoTexto = "<span style='color:red;font-weight:bold'>Atraso de {$minutosRetraso} min - doble jornada descuento</span>";
-                //     }
-                // } else {
-                //     $retrasoTexto = "{$minutosRetraso} min";
-                // }
             }
         }
-        // Descuentos por acumulado mensual
+        
         $acumuladoMes = isset($minutosPorPersonaMes[$clave]) ? $minutosPorPersonaMes[$clave] : 0;
-        $acumuladoHtml = "<br><span style='font-weight:bold'>Acumulado mes: ".number_format($acumuladoMes, 2)." min</span>";
-        $descuentoMes = '';
-        // if ($acumuladoMes >= 100 && $acumuladoMes <= 120) {
-        //     $descuentoMes = "<br>- <span class='rojo'>6 días descuento (acumulado mes)</span>";
-        // } elseif ($acumuladoMes > 120) {
-        //     $descuentoMes = "<br>- <span class='rojo'>8 días descuento (acumulado mes)</span>";
-        // }
+        $acumuladoHtml = number_format($acumuladoMes, 2);
     ?>
         <tr>
             <td><?= Html::encode($fecha) ?></td>
@@ -164,7 +127,8 @@ if (count($asistencias) > 0) {
             <td><?= Html::encode($estadoEntrada) ?></td>
             <td><?= Html::encode($estadoSalida) ?></td>
             <td><?= Html::encode($asistenciaEstado) ?></td>
-            <td><?= $retrasoTexto . $acumuladoHtml . $descuentoMes ?></td>
+            <td><?= $acumuladoHtml ?></td>
+            <td><?= $numAtrasos ?? 0 ?></td>
             <td><?= Html::encode($observaciones) ?></td>
         </tr>
     <?php endforeach; ?>
