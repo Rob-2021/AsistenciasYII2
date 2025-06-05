@@ -9,6 +9,7 @@ $asistencias = isset($asistencias) ? $asistencias : [];
 $minutosPorPersonaMes = [];
 $reincidenciasPorPersonaMes = [];
 $atrasosPorPersonaMes = [];
+$atrasosAcumuladosPorClave = [];
 
 // Ordenar asistencias por fecha y luego por turno (M antes que T)
 if (!empty($asistencias)) {
@@ -23,6 +24,16 @@ if (!empty($asistencias)) {
         }
         return $fechaA <=> $fechaB;
     });
+    // Calcular atrasos por persona y mes
+    foreach ($asistencias as $asistencia) {
+        $mes = $asistencia->HoraEntrada ? date('Y-m', strtotime($asistencia->HoraEntrada)) : '';
+        $personaId = $asistencia->IdPersona;
+        $clave = $personaId . '-' . $mes;
+        if (!isset($atrasosPorPersonaMes[$clave])) $atrasosPorPersonaMes[$clave] = 0;
+        if (($asistencia->EstadoEntrada ?? '') === 'AT') {
+            $atrasosPorPersonaMes[$clave]++;
+        }
+    }
 }
 
 // Traducción de días a español
@@ -101,7 +112,7 @@ if (count($asistencias) > 0) {
         $personaId = $asistencia->IdPersona;
         $clave = $personaId . '-' . $mes;
         if (!isset($minutosPorPersonaMes[$clave])) $minutosPorPersonaMes[$clave] = 0;
-
+        if (!isset($atrasosAcumuladosPorClave[$clave])) $atrasosAcumuladosPorClave[$clave] = 0;
         if ($asistencia->HoraEntrada && $asistencia->HoraRegistroEntrada) {
             $entradaTime  = strtotime($asistencia->HoraEntrada);
             $registroTime = strtotime($asistencia->HoraRegistroEntrada);
@@ -111,9 +122,13 @@ if (count($asistencias) > 0) {
                 $minutosPorPersonaMes[$clave] += $minutosRetraso;
             }
         }
-        
+        // Acumulado progresivo de atrasos
+        if (($asistencia->EstadoEntrada ?? '') === 'AT') {
+            $atrasosAcumuladosPorClave[$clave]++;
+        }
         $acumuladoMes = isset($minutosPorPersonaMes[$clave]) ? $minutosPorPersonaMes[$clave] : 0;
         $acumuladoHtml = number_format($acumuladoMes, 2);
+        $numAtrasos = $atrasosAcumuladosPorClave[$clave];
     ?>
         <tr>
             <td><?= Html::encode($fecha) ?></td>
@@ -128,7 +143,7 @@ if (count($asistencias) > 0) {
             <td><?= Html::encode($estadoSalida) ?></td>
             <td><?= Html::encode($asistenciaEstado) ?></td>
             <td><?= $acumuladoHtml ?></td>
-            <td><?= $numAtrasos ?? 0 ?></td>
+            <td><?= $numAtrasos ?></td>
             <td><?= Html::encode($observaciones) ?></td>
         </tr>
     <?php endforeach; ?>
