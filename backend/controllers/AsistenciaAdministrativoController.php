@@ -107,9 +107,11 @@ class AsistenciaAdministrativoController extends Controller
                 ->andWhere(["=", "DATEPART(month, HoraEntrada)", ltrim($mesNum, '0')]);
             $asistencias = $query->all();
             $acumulados = [];
+            $atrasosAcumuladosPorClave = [];
             foreach ($asistencias as $asistencia) {
                 $personaId = $asistencia->IdPersona;
-                $clave = $personaId . '-' . $mes;
+                $mesClave = $mes; // mes en formato YYYY-MM
+                $clave = $personaId . '-' . $mesClave;
                 if (!isset($acumulados[$clave])) {
                     $acumulados[$clave] = [
                         'persona' => $asistencia->persona,
@@ -118,6 +120,7 @@ class AsistenciaAdministrativoController extends Controller
                         'IdPersona' => $personaId,
                     ];
                 }
+                if (!isset($atrasosAcumuladosPorClave[$clave])) $atrasosAcumuladosPorClave[$clave] = 0;
                 if ($asistencia->HoraEntrada && $asistencia->HoraRegistroEntrada) {
                     $entrada  = strtotime($asistencia->HoraEntrada);
                     $registro = strtotime($asistencia->HoraRegistroEntrada);
@@ -125,11 +128,13 @@ class AsistenciaAdministrativoController extends Controller
                         $segundosRetraso = $registro - $entrada;
                         $minutosRetraso = round($segundosRetraso / 60, 2);
                         $acumulados[$clave]['minutos'] += $minutosRetraso;
-                        if ($segundosRetraso > 300) {
-                            $acumulados[$clave]['atrasos']++;
-                        }
                     }
                 }
+                // Acumulado progresivo de atrasos (EstadoEntrada == 'AT')
+                if (($asistencia->EstadoEntrada ?? '') === 'AT') {
+                    $atrasosAcumuladosPorClave[$clave]++;
+                }
+                $acumulados[$clave]['atrasos'] = $atrasosAcumuladosPorClave[$clave];
             }
             // Filtrar solo administrativos con 5 o más atrasos
             $acumulados = array_filter($acumulados, function($item) {
