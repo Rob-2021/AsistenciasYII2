@@ -1,34 +1,13 @@
 <?php
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
-use yii\bootstrap5\LinkPager;
-$this->title = 'Planilla Detallada de Asistencia Administrativa';
+
 ?>
-<h1><?= Html::encode($this->title) ?></h1>
-
-
-<?php $form = ActiveForm::begin(['method' => 'get', 'action' => ['asistencia-administrativo/planillas']]); ?>
-<?= $form->field($model, 'mes')->input('month', ['value' => $model->mes ?? ''])->label('Mes:') ?>
-<button type="submit" class="btn btn-primary">Filtrar</button>
-
-<div class="mb-3">
-    <?= Html::a('Generar PDF', ['asistencia-administrativo/exportar', 'tipo' => 'pdf', 'mes' => $model->mes], [
-        'class' => 'btn btn-danger',
-        'target' => '_blank',
-        'data-pjax' => '0',
-    ]) ?>
-
-    <?= Html::a('Generar Excel', ['asistencia-administrativo/exportar', 'tipo' => 'excel', 'mes' => $model->mes], [
-        'class' => 'btn btn-success',
-        'target' => '_blank',
-        'data-pjax' => '0',
-    ]) ?>
-</div>
-
-<?php ActiveForm::end(); ?>
-
-<table class="table table-bordered table-striped">
-    <thead>
+<h2 style="text-align:center;">Planilla Detallada de Asistencia Administrativa</h2>
+<?php if ($mes): ?>
+    <p><strong>Mes:</strong> <?= Html::encode($mes) ?></p>
+<?php endif; ?>
+<table border="1" cellpadding="4" cellspacing="0" width="100%" style="border-collapse:collapse; font-size:12px;">
+    <thead style="background:#f2f2f2;">
         <tr>
             <th>No.</th>
             <th>CI</th>
@@ -46,7 +25,7 @@ $this->title = 'Planilla Detallada de Asistencia Administrativa';
     </thead>
     <tbody>
     <?php if (!empty($data)): ?>
-        <?php $no = ($pagination->getPage() * $pagination->getPageSize()) + 1; ?>
+        <?php $no = 1; ?>
         <?php foreach ($data as $fila): ?>
             <tr>
                 <td><?= $no++ ?></td>
@@ -73,4 +52,3 @@ $this->title = 'Planilla Detallada de Asistencia Administrativa';
     <?php endif; ?>
     </tbody>
 </table>
-<?= isset($pagination) ? LinkPager::widget(['pagination' => $pagination]) : '' ?>
