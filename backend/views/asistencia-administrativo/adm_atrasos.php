@@ -6,10 +6,44 @@ $this->title = 'Administrativos con más atrasos y minutos acumulados';
 ?>
 <h1><?= Html::encode($this->title) ?></h1>
 
-<?php $form = ActiveForm::begin(); ?>
+<!-- Overlay Preloader centrado -->
+<div id="preloader-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:9999; justify-content:center; align-items:center;">
+    <div>
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <div style="color:white; text-align:center; margin-top:10px; font-size:1.2rem;">Cargando...</div>
+    </div>
+</div>
+
+<?php $form = ActiveForm::begin(['id' => 'adm-atrasos-form']); ?>
     <?= $form->field($model, 'mes')->input('month') ?>
-    <button type="submit" class="btn btn-primary">Buscar</button>
+    <button type="submit" class="btn btn-primary" id="buscar-btn">Buscar</button>
 <?php ActiveForm::end(); ?>
+
+<script>
+    var form = document.getElementById('adm-atrasos-form');
+    var btn = document.getElementById('buscar-btn');
+    var overlay = document.getElementById('preloader-overlay');
+
+    // Mostrar preloader al enviar
+    form.addEventListener('submit', function(e) {
+        btn.disabled = true;
+        overlay.style.display = 'flex';
+    });
+
+    // Ocultar preloader cuando termine el submit AJAX de Yii2
+    if (window.jQuery) {
+        $(form).on('ajaxComplete', function() {
+            btn.disabled = false;
+            overlay.style.display = 'none';
+        });
+        $(form).on('ajaxError', function() {
+            btn.disabled = false;
+            overlay.style.display = 'none';
+        });
+    }
+</script>
 
 <?php if ($data): ?>
     <h3>Resultados para el mes seleccionado</h3>
