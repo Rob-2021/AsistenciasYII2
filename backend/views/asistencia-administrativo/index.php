@@ -30,7 +30,6 @@ $this->title = 'Asistencias de Administrativos';
     <a href="<?= \yii\helpers\Url::to(array_merge(['asistencia-administrativo/exportar', 'tipo' => 'pdf'], $params)) ?>" class="btn btn-danger" target="_blank">Generar PDF</a>
     <a href="<?= \yii\helpers\Url::to(array_merge(['asistencia-administrativo/exportar', 'tipo' => 'excel'], $params)) ?>" class="btn btn-success" target="_blank">Generar Excel</a>
     <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/adm-atrasos']) ?>" class="btn btn-warning">Adm Atrasos</a>
-    <!-- <a href="<?= \yii\helpers\Url::to(['asistencia-administrativo/planillas']) ?>" class="btn btn-primary">Planillas</a> -->
 </form>
 
 <?= GridView::widget([
