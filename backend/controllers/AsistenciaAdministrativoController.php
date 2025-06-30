@@ -72,11 +72,40 @@ class AsistenciaAdministrativoController extends Controller
             'asistencias' => $asistencias,
         ]);
 
+        // Generar nombre de archivo personalizado
+        $nombreArchivo = 'reporte_asistencias';
+        if (!empty($asistencias) && $asistencias[0]->persona) {
+            $persona = $asistencias[0]->persona;
+            $nombres = strtolower(trim($persona->Nombres ?? ''));
+            $apellido = strtolower(trim($persona->Paterno ?? ''));
+            
+            // Obtener mes y año del filtro
+            $mesTexto = '';
+            $anioTexto = '';
+            if ($mes = $request->get('mes')) {
+                list($anioTexto, $mesNum) = explode('-', $mes);
+                $meses = [
+                    '01' => 'enero', '02' => 'febrero', '03' => 'marzo', '04' => 'abril',
+                    '05' => 'mayo', '06' => 'junio', '07' => 'julio', '08' => 'agosto',
+                    '09' => 'septiembre', '10' => 'octubre', '11' => 'noviembre', '12' => 'diciembre'
+                ];
+                $mesTexto = $meses[$mesNum] ?? '';
+            }
+            
+            // Construir nombre: nombres-apellido-mes-año
+            $partes = array_filter([$nombres, $apellido, $mesTexto, $anioTexto]);
+            if (!empty($partes)) {
+                $nombreArchivo = implode('-', $partes);
+                // Limpiar caracteres especiales
+                $nombreArchivo = preg_replace('/[^a-z0-9\-]/', '', $nombreArchivo);
+            }
+        }
+
         if ($tipo === 'pdf') {
             // Requiere instalar kartik-v/yii2-mpdf o yiisoft/yii2-mpdf
             $pdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4-L']);
             $pdf->WriteHTML($content);
-            return Yii::$app->response->sendContentAsFile($pdf->Output('', 'S'), 'reporte_asistencias.pdf', [
+            return Yii::$app->response->sendContentAsFile($pdf->Output('', 'S'), $nombreArchivo . '.pdf', [
                 'mimeType' => 'application/pdf',
                 'inline' => true,
             ]);
@@ -87,7 +116,7 @@ class AsistenciaAdministrativoController extends Controller
             ob_start();
             $writer->save('php://output');
             $excelOutput = ob_get_clean();
-            return Yii::$app->response->sendContentAsFile($excelOutput, 'reporte_asistencias.xlsx', [
+            return Yii::$app->response->sendContentAsFile($excelOutput, $nombreArchivo . '.xlsx', [
                 'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'inline' => false,
             ]);
